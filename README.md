@@ -16,3 +16,4 @@ Screenshots:
 ![Preview 1](http://i.imgur.com/DfiBCUf.jpg)
 ![Preview 2](http://i.imgur.com/DoC8qtD.jpg)
 
+only pops out resource folders. Lets you make a server content folder
