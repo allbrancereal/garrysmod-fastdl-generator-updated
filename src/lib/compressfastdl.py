@@ -10,6 +10,21 @@ from os.path import exists, join, isfile, splitext
 from random import randint
 from PyQt5.QtCore import QThread
 import subprocess
+import os
+import shutil
+import time
+
+def merge_dirs(src, dst):
+    for src_dir, dirs, files in os.walk(src):
+        dst_dir = src_dir.replace(src, dst, 1)
+        if not os.path.exists(dst_dir):
+            os.makedirs(dst_dir)
+        for file_ in files:
+            src_file = os.path.join(src_dir, file_)
+            dst_file = os.path.join(dst_dir, file_)
+            if os.path.exists(dst_file):
+                os.remove(dst_file)
+            shutil.move(src_file, dst_dir)
 
 class FastDLFolder():
     """ This class represents a single folder that is to be prepared for FastDL.
@@ -93,13 +108,9 @@ class FastDLFolder():
                     if self.replaceOld or not (isfile(bz2Path) or isfile(bz2Path + ".bz2")):
                             if self.generateResource: self.resourceStr += "\n\tresource.AddSingleFile(\"" + cropPath.replace("\\", "/") + "\")"
                             fileObjContent = fileObj.read()
-                            bz2ObjContent = compress(fileObjContent)
-                            if len(bz2ObjContent) > fileObj.tell():
-                                with open(bz2Path, "wb") as newFileObj:
-                                    newFileObj.write(fileObjContent)
-                            else:
-                                with open(bz2Path + ".bz2", "wb") as bz2FileObj:
-                                    bz2FileObj.write(bz2ObjContent)
+                            with open(bz2Path, "wb") as newFileObj:
+                                newFileObj.write(fileObjContent)
+
                             count += 1
         output = "Finished! We compressed '" + str(count) + "' files!"
 
@@ -109,6 +120,9 @@ class FastDLFolder():
             output += " Your resource file was also generated!"
 
         self.sendMessage(output)
+
+
+    # ...
 
     def unpackGma(self):
         """ This scans for .gma files and unpacks them. """
@@ -129,7 +143,30 @@ class FastDLFolder():
                 if splitext(path)[1] == ".gma":
                     printPath = path.split("\\")
                     self.sendMessage("Unpacking: '" + printPath[len(printPath)-1] + "'")
+                    # New code starts here
+                    dirs_before = set(os.listdir(self.outputDir))
                     p = subprocess.Popen(["lib/gmadconv.exe", path], cwd=self.outputDir)
+                    try:
+                        p.wait(timeout=60)  # wait for 60 seconds
+                    except subprocess.TimeoutExpired:
+                        self.sendMessage("Unpacking process took too long and was terminated.")
+                        p.kill()  # terminate the process
+                        continue  # skip to the next file
+
                     p.wait()
+                    time.sleep(1)  # wait for 1 second
+                    dirs_after = set(os.listdir(self.outputDir))
+                    new_dirs = dirs_after - dirs_before
+                    if new_dirs:
+                        addon_dir = join(self.outputDir, list(new_dirs)[0])
+                        # ...
+                        for dir in os.listdir(addon_dir):
+                            if dir in self.filter:
+                                target_dir = join(self.outputDir, dir)
+                                merge_dirs(join(addon_dir, dir), target_dir)
+                        shutil.rmtree(addon_dir)
+                        # ...
+
+
                     count += 1
         self.sendMessage("Finished! We unpacked '" + str(count) + "' .gma files!")
