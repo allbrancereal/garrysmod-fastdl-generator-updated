@@ -8,7 +8,7 @@ Simply put, this will scan a given directory and compress (Using the Source-comp
 
 The script will output these size-optimized files into the given directory and will even generate a file containing all the necessary Lua code - [resource.AddFile()](http://wiki.garrysmod.com/page/resource/AddFile). (Just put the file inside of 'lua/autorun/' on your server!).
 
-NOTE: This script has yet to be compiled; so will require a valid installation of [Python 3.x](https://www.python.org/downloads/) and [PyQt4](http://www.riverbankcomputing.co.uk/software/pyqt/download)!
+NOTE: This script has yet to be compiled; so will require a valid installation of [Python 3.x](https://www.python.org/downloads/) and PyQT5!
 
 
 Screenshots:
